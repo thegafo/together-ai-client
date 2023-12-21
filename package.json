@@ -1,18 +1,38 @@
 {
   "name": "together-ai-client",
-  "version": "1.0.0",
+  "version": "0.0.1",
+  "description": "A Node.js client for interacting with the Together AI LLM API.",
   "main": "index.ts",
+  "types": "index.d.ts",
   "scripts": {
+    "build": "tsc",
     "chat": "ts-node chat.ts"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/thegafo/together-ai-client.git"
+  },
+  "keywords": [
+    "together-ai",
+    "llm",
+    "api-client",
+    "nodejs"
+  ],
+  "author": "thegafo",
+  "bugs": {
+    "url": "https://github.com/thegafo/together-ai-client/issues"
+  },
+  "homepage": "https://github.com/thegafo/together-ai-client#readme",
   "dependencies": {
     "axios": "^1.6.2"
   },
   "devDependencies": {
-    "@types/node": "^20.10.5"
+    "@types/node": "^20.10.5",
+    "ts-node": "^10.0.0",
+    "typescript": "^4.0.0"
   },
-  "description": ""
+  "peerDependencies": {},
+  "engines": {
+    "node": ">=14.0.0"
+  }
 }
