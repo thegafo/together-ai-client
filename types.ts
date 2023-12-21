@@ -7,11 +7,10 @@ export type CompletionRequest = {
   top_p?: number;
   top_k?: number;
   repetition_penalty?: number;
-  stream_tokens?: boolean;
   stop?: string[];
   negative_prompt?: string;
-  sessionKey?: string;
-  stream?: boolean;
+  session_key?: string;
+  log?: boolean;
 }
 
 export type UsageData = {

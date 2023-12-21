@@ -1,6 +1,6 @@
 {
   "name": "together-ai-client",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "A Node.js client for interacting with the Together AI LLM API.",
   "main": "index.ts",
   "types": "index.d.ts",

@@ -1,10 +1,11 @@
-import { getCompletion } from "./api";
+import EventEmitter from "events";
+import { getCompletion, streamCompletion } from "./api";
 import { CompletionRequest, UsageData } from "./types";
 
 export default class Together {
   private apiKey: string;
   public usage: UsageData;
-  
+
   constructor(apiKey: string) {
     this.apiKey = apiKey;
     this.usage = {
@@ -23,5 +24,11 @@ export default class Together {
       total_tokens: this.usage.total_tokens + usage.total_tokens,
     };
     return { completion, usage };
+  }
+
+  async stream(request: CompletionRequest): Promise<EventEmitter> {
+    console.log()
+    const stream = await streamCompletion(request, this.apiKey);
+    return stream;
   }
 }

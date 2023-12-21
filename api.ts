@@ -1,5 +1,6 @@
 import axios from 'axios';
 import { CompletionRequest, CompletionResponse, UsageData } from './types';
+import { EventEmitter } from 'events';
 
 /**
  * Executes an API call to Together AI for language model completion.
@@ -32,14 +33,13 @@ export const getCompletion = ({
   top_p = 0.7,
   top_k = 50,
   repetition_penalty = 1,
-  stream_tokens = true,
   stop = [
     "</s>",
     "[INST]"
   ],
   negative_prompt = "",
-  sessionKey = "",
-  stream = true,
+  session_key = "",
+  log = true,
 }: CompletionRequest, apiKey: string): Promise<CompletionResponse> => {
   return new Promise(async (resolve, reject) => {
     try {
@@ -53,10 +53,10 @@ export const getCompletion = ({
         top_k,
         repetition_penalty,
         repetitive_penalty: 1,
-        stream_tokens,
+        stream_tokens: true,
         stop,
         negative_prompt,
-        sessionKey,
+        session_key,
         update_at: new Date().toISOString(),
       }, {
         headers: {
@@ -68,11 +68,6 @@ export const getCompletion = ({
       let completion = '';
       let usage: UsageData;
       let partialChunk = '';
-
-      response.data.on('error', (err: Error) => {
-        console.log('error here')
-        reject(`Error: ${err}`);
-      });
 
       response.data.on('data', (raw: Buffer) => {
         const str = raw.toString('utf8').replace(/data\: /g, '').split('\n\n').filter(Boolean);
@@ -102,15 +97,105 @@ export const getCompletion = ({
           if (chunk.usage) {
             usage = chunk.usage as UsageData;
           }
-          if (stream) {
-            process.stdout.write(chunk.choices[0].text);
+          if (log) {
+            process.stdout.write(!completion ? chunk.choices[0].text.slice(1) : chunk.choices[0].text);
           }
-          completion += chunk.choices[0].text;
+          completion += !completion ? chunk.choices[0].text.slice(1) : chunk.choices[0].text;
           partialChunk = '';
         }
       });
     } catch (err) {
-      console.log('error here asdf')
+      reject(`Error: ${err}`)
+    }
+  });
+}
+
+export const streamCompletion = ({
+  model = "mistralai/Mixtral-8x7B-Instruct-v0.1",
+  max_tokens = 512,
+  prompt = "[INST]Hello world[/INST]",
+  request_type = "language-model-inference",
+  temperature = 0.7,
+  top_p = 0.7,
+  top_k = 50,
+  repetition_penalty = 1,
+  stop = [
+    "</s>",
+    "[INST]"
+  ],
+  negative_prompt = "",
+  session_key = "",
+  log = true,
+}: CompletionRequest, apiKey: string): Promise<EventEmitter> => {
+  return new Promise(async (resolve, reject) => {
+    try {
+      const response = await axios.post('https://api.together.xyz/inference', {
+        model,
+        max_tokens,
+        prompt,
+        request_type,
+        temperature,
+        top_p,
+        top_k,
+        repetition_penalty,
+        repetitive_penalty: 1,
+        stream_tokens: true,
+        stop,
+        negative_prompt,
+        session_key,
+        update_at: new Date().toISOString(),
+      }, {
+        headers: {
+          Authorization: `Bearer ${apiKey}`,
+        },
+        responseType: 'stream'
+      });
+
+      let completion = '';
+      let usage: UsageData;
+      let partialChunk = '';
+
+      const streamEmitter = new EventEmitter();
+      resolve(streamEmitter)
+
+      response.data.on('data', (raw: Buffer) => {
+        const str = raw.toString('utf8').replace(/data\: /g, '').split('\n\n').filter(Boolean);
+        for (let i = 0; i < str.length; i++) {
+          const _chunk = partialChunk + str[i].trim();
+          if (_chunk === '[DONE]') {
+            // Estimate usage if not returned
+            if (!usage) {
+              usage = {
+                prompt_tokens: Math.ceil(prompt.length / 4),
+                completed_tokens: Math.ceil(completion.length / 4),
+                total_tokens: Math.ceil(prompt.length / 4 + completion.length / 4),
+              };
+            }
+
+            streamEmitter.emit('done', {
+              completion: completion.trim(),
+              usage,
+            });
+          }
+          let chunk;
+          try {
+            chunk = JSON.parse(_chunk);
+          } catch (err) {
+            partialChunk += _chunk;
+            continue;
+          }
+          if (chunk.usage) {
+            usage = chunk.usage as UsageData;
+          }
+          if (log) {
+            process.stdout.write(chunk.choices[0].text);
+          }
+          streamEmitter.emit('data', !completion ? chunk.choices[0].text.slice(1) : chunk.choices[0].text);
+          completion += !completion ? chunk.choices[0].text.slice(1) : chunk.choices[0].text;
+          partialChunk = '';
+        }
+      });
+    } catch (err) {
       reject(`Error: ${err}`)
     }
   });
