@@ -1,6 +1,7 @@
 <template>
   <div class="input-container">
     <textarea
+      class="textarea"
       ref="input"
       v-model="input"
       :disabled="loading"
@@ -54,7 +55,7 @@ export default {
 };
 </script>
 
-<style>
+<style scoped>
 .input-container {
   display: flex;
   justify-content: center;
@@ -64,7 +65,7 @@ export default {
   margin-bottom: 5px;
 }
 
-textarea {
+.textarea {
   background-color: transparent;
   color: var(--text-color);
   resize: none;

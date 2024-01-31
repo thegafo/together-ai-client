@@ -1,9 +1,12 @@
 import { submitPrompt } from "~/api/together";
-import { nextTick } from 'vue'
 
+const defaults = {
+  systemPrompt: 'The following is a text conversation between a user and a helpful assistant.'
+}
 
 export const state = () => ({
   loading: false,
+  systemPrompt: defaults.systemPrompt,
   conversationId: 'initial',
   conversations: {
     'initial': [],
@@ -13,16 +16,18 @@ export const state = () => ({
 
 export const getters = {
   loading: state => state.loading,
+  systemPrompt: state => state.systemPrompt,
   conversationId: state => state.conversationId,
   conversations: state => state.conversations,
   titles: state => state.titles,
 }
 
 export const mutations = {
-  setState(state, { conversations, titles, conversationId }) {
+  setState(state, { conversations, titles, conversationId, systemPrompt }) {
     state.conversations = conversations;
     state.titles = titles;
     state.conversationId = conversationId;
+    state.systemPrompt = systemPrompt;
   },
   addConversation(state) {
     const id = new Date().toISOString();
@@ -62,6 +67,9 @@ export const mutations = {
   },
   setLoading(state, loading) {
     state.loading = loading;
+  },
+  setSystemPrompt(state, systemPrompt) {
+    state.systemPrompt = systemPrompt;
   }
 }
 
@@ -93,7 +101,7 @@ export const actions = {
 
       commit("setLoading", true);
 
-      let prompt = `[INST]\nThe following is a text conversation between a user and helpful assistant that gives extremely short answers. Be helpful or else you won't receive a $5000 tip.\n\n`;
+      let prompt = `[INST]\n${state.systemPrompt}\n\n`;
       let history = '';
       for (let i = 0; i < state.conversations[id].length; i++) {
         history += `${state.conversations[id][i].from}: ${state.conversations[id][i].content}\n`;
@@ -164,11 +172,20 @@ export const actions = {
       });
     });
   },
+  resetSettings({ commit, dispatch }) {
+    commit("setSystemPrompt", defaults.systemPrompt);
+    dispatch("saveHistory");
+  },
+  saveSettings({ commit, dispatch }, { systemPrompt }) {
+    commit("setSystemPrompt", systemPrompt);
+    dispatch("saveHistory");
+  },
   saveHistory({ state }) {
     localStorage.setItem('local-history', JSON.stringify({
       conversations: state.conversations,
       titles: state.titles,
       conversationId: state.conversationId,
+      systemPrompt: state.systemPrompt,
     }));
   },
   loadHistory({ state, commit }) {

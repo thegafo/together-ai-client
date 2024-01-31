@@ -1,6 +1,8 @@
 <template>
-  <div :class="['message', type === 'user' ? 'user' : 'assistant']">
-    <pre>{{ text }}</pre>
+  <div :class="['message', from === 'User' ? 'user' : 'assistant']">
+    <pre>{{ content.trim() }}</pre>
+    <!-- TODO -->
+    <!--div v-html="formattedContent"></div-->
   </div>
 </template>
 
@@ -8,8 +10,29 @@
 export default {
   name: "Message",
   props: {
-    text: String,
-    type: String,
+    content: String,
+    from: String,
+  },
+  computed: {
+    formattedContent() {
+      return this.formatCodeBlocks(this.content);
+    },
+  },
+  methods: {
+    formatCodeBlocks(str) {
+      let regex = /^```.*?\n[\s\S]+?```$/gm;
+      let match;
+      while ((match = regex.exec(str))) {
+        let code = match[0]
+          .replace(/^```.*?\n/, "")
+          .replace(/```$/, "")
+          .replace(/</g, "&lt;")
+          .replace(/>/g, "&gt;");
+        let htmlCode = `<pre><code>${code}</code></pre>`;
+        str = str.replace(match[0], htmlCode);
+      }
+      return str.replace(/\n/g, "<br>");
+    },
   },
 };
 </script>
@@ -37,5 +60,13 @@ pre {
   word-wrap: break-word;
   overflow-x: auto;
   font-family: "Roboto Mono", monospace;
+}
+
+pre code {
+  font-family: "Roboto Mono", monospace; /* Monospaced font */
+  background-color: black; /* Light grey background */
+  padding: 10px; /* Padding around text */
+  display: block; /* Block display */
+  overflow-x: auto; /* Horizontal scrolling for long lines */
 }
 </style>

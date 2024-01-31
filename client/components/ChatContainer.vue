@@ -5,13 +5,12 @@
       class="messages"
       id="scroll"
     >
-      <div
-        :class="['message', message.from === 'User' ? 'user' : 'assistant']"
+      <message
         v-for="message in conversation"
         :key="message.id"
-      >
-        <pre v-if="message.content" v-text="message.content.trim()"></pre>
-      </div>
+        :content="message.content"
+        :from="message.from"
+      ></message>
     </div>
     <welcome v-else />
     <input-container ref="input" @send="handleSend" :loading="loading" />
