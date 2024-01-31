@@ -1,5 +1,5 @@
 import { ask } from "./ask";
-import Together from ".";
+import Together from "../app/together";
 import { config, tools } from "./tools";
 
 const apiKey = process.env.TOGETHERAI_API_KEY;

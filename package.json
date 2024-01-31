@@ -6,7 +6,9 @@
   "types": "index.d.ts",
   "scripts": {
     "build": "tsc",
-    "chat": "ts-node chat.ts"
+    "chat": "ts-node scripts/chat",
+    "dev": "ts-node app/",
+    "start": "node dist/app"
   },
   "repository": {
     "type": "git",

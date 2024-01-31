@@ -1,5 +1,5 @@
 import { ask } from "./ask";
-import Together from ".";
+import Together from "../app/together";
 
 const apiKey = process.env.TOGETHERAI_API_KEY;
 if (!apiKey) {
@@ -12,7 +12,7 @@ if (!apiKey) {
   const together = new Together(apiKey);
 
   let prompt = '[INST]\nYou are a helpful assistant talking to only User.\n\n';
-  while (true) {
+  const loop = async () => {
     const input = await ask('>>> ');
     if (input === 'q') {
       console.log(together.usage);
@@ -20,18 +20,25 @@ if (!apiKey) {
     }
     prompt += `User: ${input}\nAssistant: `;
     try {
-      const { completion } = await together.inference({
+      const stream = await together.stream({
         prompt: `${prompt}\n[/INST]`,
         max_tokens: 512,
         model: 'mistralai/Mixtral-8x7B-Instruct-v0.1',
         stop: ['User:', '</s>'],
+        log: false,
       });
-      prompt += `${completion}\n`
-      console.log();
-      console.log();
+      stream.on('data', (chunk: string) => {
+        process.stdout.write(chunk);
+      });
+      stream.on('done', () => {
+        console.log();
+        console.log();
+        loop();
+      });
     } catch (err) {
       console.error(err);
       process.exit(1);
     }
   }
+  loop();
 })();

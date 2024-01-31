@@ -1,4 +1,4 @@
-import Together from ".";
+import Together from "./together";
 import express from 'express';
 import path from 'path';
 import { default as ngrok } from "ngrok";
@@ -53,8 +53,6 @@ app.post('/prompt', async (req: express.Request, res: express.Response) => {
     console.error(err);
     return res.status((err as any).status || 500).json(err);
   }
-
-
 });
 
 const PORT = process.env.PORT ? parseInt(process.env.PORT) : 3000;
