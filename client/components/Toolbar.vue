@@ -1,5 +1,7 @@
 <template>
-  <div class="toolbar" @click="handleClick">GG Chat</div>
+  <div class="toolbar">
+    <span class="welcome" @click="handleClick">GG Chat</span>
+  </div>
 </template>
 
 <script>
@@ -23,6 +25,9 @@ export default {
   align-items: center;
   height: 10px;
   line-height: 10px;
+}
+
+.welcome {
   cursor: pointer;
 }
 

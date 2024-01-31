@@ -2,6 +2,7 @@ import Together from "./together";
 import express from 'express';
 import path from 'path';
 import { default as ngrok } from "ngrok";
+import cors from 'cors';
 
 const apiKey = process.env.TOGETHERAI_API_KEY;
 if (!apiKey) {
@@ -13,8 +14,11 @@ const together = new Together(apiKey);
 
 const app = express();
 
+// Enable CORS
+app.use(cors());
+
 // Serve static directory
-app.use(express.static(path.join(__dirname, 'static')));
+app.use(express.static(path.join(__dirname, '..', 'static')));
 
 // Read JSON
 app.use(express.json());

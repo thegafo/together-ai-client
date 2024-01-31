@@ -36,13 +36,33 @@ export default {
     conversation: Array,
     loading: Boolean,
   },
+  watch: {
+    conversation: {
+      handler: function (val) {
+        this.scrollDown();
+      },
+      deep: true,
+    },
+  },
   methods: {
     handleSend(input) {
       this.$emit("send", input);
+      this.$nextTick(() => {
+        this.scrollDown();
+      });
     },
     focus() {
       this.$refs.input.focus();
     },
+    scrollDown() {
+      try {
+        var container = this.$el.querySelector("#scroll");
+        container.scrollTop = container.scrollHeight;
+      } catch (err) {}
+    },
+  },
+  mounted() {
+    this.scrollDown();
   },
 };
 </script>

@@ -4,10 +4,10 @@
       v-if="showSidebar"
       :conversations="conversations"
       :titles="titles"
-      :selectedId="id"
+      :selectedId="conversationId"
       @selectConversation="handleItemSelected"
       @newChat="handleNewChat"
-      @deleteChat="handleDeleteChat"
+      @removeChat="handleRemoveChat"
     />
     <spacer @click="toggleSidebar" :spacerText="showSidebar ? '\|' : '>'" />
     <div class="main">
@@ -24,6 +24,8 @@
 </template>
 
 <script>
+import { mapGetters, mapMutations, mapActions } from "vuex";
+
 import Sidebar from "./Sidebar.vue";
 import Spacer from "./Spacer.vue";
 import Toolbar from "./Toolbar.vue";
@@ -37,73 +39,72 @@ export default {
     Toolbar,
     ChatContainer,
   },
+  computed: {
+    ...mapGetters({
+      loading: "chat/loading",
+      conversations: "chat/conversations",
+      titles: "chat/titles",
+      conversationId: "chat/conversationId",
+    }),
+    id() {
+      return this.conversationId;
+    },
+  },
   data() {
     return {
-      id: "12345",
-      loading: false,
-      input: null,
       showSidebar: true,
-      conversations: {
-        12345: [
-          {
-            id: 1,
-            content: "Hey!",
-            from: "User",
-          },
-          {
-            id: 2,
-            content: "Hello, world!",
-            from: "Assistant",
-          },
-        ],
-      },
-      titles: {
-        12345: "Hello World",
-      },
     };
   },
   methods: {
+    ...mapActions({
+      send: "chat/send",
+      newChat: "chat/newChat",
+      removeChat: "chat/removeChat",
+      loadHistory: "chat/loadHistory",
+    }),
+    ...mapMutations({
+      setConversationId: "chat/setConversationId",
+    }),
     toggleSidebar() {
       this.showSidebar = !this.showSidebar;
     },
     handleItemSelected(id) {
-      this.id = id;
+      this.setConversationId({ id });
+      this.$nextTick(() => {
+        this.scrollDown();
+        this.focus();
+      });
     },
     handleNewChat() {
-      this.id = new Date().toISOString();
-      this.conversations = {
-        [this.id]: [],
-        ...this.conversations,
-      };
-      this.$forceUpdate();
+      this.newChat();
     },
-    handleDeleteChat(id) {
-      delete this.conversations[id];
-      delete this.titles[id];
-      if (Object.keys(this.conversations).length == 0) {
-        this.handleNewChat();
-      } else {
-        this.id = Object.keys(this.conversations)[0];
-      }
-      this.$forceUpdate();
+    handleRemoveChat(id) {
+      this.removeChat({ id });
     },
-    handleSend(input) {
-      if (!input) {
+    async handleSend(input) {
+      if (!input.trim()) {
         return;
       }
-      this.conversations[this.id].push({
+      await this.send({
+        id: this.id,
         content: input,
-        from: "User",
       });
-      this.submitPrompt();
+      this.focus();
     },
-    submitPrompt() {},
     focus() {
       this.$refs.chat.focus();
     },
+    scrollDown() {
+      this.$refs.chat.scrollDown();
+      this.$nextTick(() => {
+        this.$refs.chat.scrollDown();
+      });
+    },
   },
   mounted() {
+    this.loadHistory();
     this.focus();
+    this.scrollDown();
   },
 };
 </script>

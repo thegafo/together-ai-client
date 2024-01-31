@@ -3,7 +3,7 @@
     <div @click="newChat" class="sidebar-item">New Chat</div>
     <div
       class="sidebar-item"
-      v-for="id in Object.keys(conversations).reverse()"
+      v-for="id in Object.keys(conversations)"
       :key="id"
       @click="selectConversation(id)"
       :class="{ current: selectedId === id }"
@@ -12,7 +12,9 @@
         {{ titles[id] || "Untitled" }}
       </div>
       <div class="sidebar-item-delete-container">
-        <div class="sidebar-item-delete" @click="deleteChat(id)">🗑️</div>
+        <div class="sidebar-item-delete" @click.prevent="removeChat(id)">
+          🗑️
+        </div>
       </div>
     </div>
   </div>
@@ -33,8 +35,8 @@ export default {
     newChat() {
       this.$emit("newChat");
     },
-    deleteChat(id) {
-      this.$emit("deleteChat", id);
+    removeChat(id) {
+      this.$emit("removeChat", id);
     },
   },
 };
@@ -67,7 +69,7 @@ export default {
 }
 
 .sidebar-item:hover {
-  background-color: var(--highlight-color);
+  background-color: var(--user-color);
 }
 
 .sidebar-item-delete-container {

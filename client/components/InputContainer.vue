@@ -7,7 +7,7 @@
       @keydown="handleKeydown"
       @input="autogrow"
       @focus="autogrow"
-      placeholder="Message..."
+      :placeholder="loading ? 'Loading...' : 'Message...'"
       rows="1"
     ></textarea>
   </div>

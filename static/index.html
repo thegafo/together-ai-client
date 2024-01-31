@@ -19,7 +19,7 @@
             {{titles[_id] || 'Untitled'}}
           </div>
           <div class="sidebar-item-delete-container">
-            <div class="sidebar-item-delete" @click="deleteChat(_id)">🗑️</div>
+            <div class="sidebar-item-delete" @click="removeChat(_id)">🗑️</div>
           </div>
         </div>
       </div>
@@ -279,7 +279,7 @@
             this.$refs.input.style.height = newHeight + 'px'; // Set the height
             this.$refs.input.overflowY = newHeight === maxHeight ? 'scroll' : 'hidden';
           },
-          deleteChat(id) {
+          removeChat(id) {
             delete this.conversations[id];
             delete this.titles[id];
             if (Object.keys(this.conversations).length == 0) {
