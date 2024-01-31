@@ -94,13 +94,14 @@ export const getCompletion = ({
             partialChunk += _chunk;
             continue;
           }
+          let text = chunk.choices[0].text;
           if (chunk.usage) {
             usage = chunk.usage as UsageData;
           }
           if (log) {
-            process.stdout.write(!completion ? chunk.choices[0].text.slice(1) : chunk.choices[0].text);
+            process.stdout.write(!completion && text[0] === ' ' ? text.slice(1) : text);
           }
-          completion += !completion ? chunk.choices[0].text.slice(1) : chunk.choices[0].text;
+          completion += !completion && text[0] === ' ' ? text.slice(1) : text;
           partialChunk = '';
         }
       });
@@ -181,22 +182,30 @@ export const streamCompletion = ({
           try {
             chunk = JSON.parse(_chunk);
           } catch (err) {
-            partialChunk += _chunk;
+            try {
+              partialChunk += _chunk ? _chunk : '';
+            } catch (err) {
+              console.log(err);
+              console.log(typeof _chunk);
+              console.log(_chunk);
+            }
             continue;
           }
+          let text = chunk.choices[0].text;
           if (chunk.usage) {
             usage = chunk.usage as UsageData;
           }
           if (log) {
             process.stdout.write(chunk.choices[0].text);
           }
-          streamEmitter.emit('data', !completion ? chunk.choices[0].text.slice(1) : chunk.choices[0].text);
-          completion += !completion ? chunk.choices[0].text.slice(1) : chunk.choices[0].text;
+          streamEmitter.emit('data', !completion && text[0] === ' ' ? text.slice(1) : text);
+          completion += !completion && text[0] === ' ' ? text.slice(1) : text;
           partialChunk = '';
         }
       });
     } catch (err) {
-      reject(`Error: ${err}`)
+      const _err = err as any;
+      reject({ error: _err.message, status: _err.response.status });
     }
   });
 }

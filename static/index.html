@@ -1,0 +1,334 @@
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>GG Chat</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+    <link rel="stylesheet" href="styles.css" />
+    <script src="https://cdn.jsdelivr.net/npm/vue@2"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@400;500&display=swap" rel="stylesheet">
+  </head>
+  </head>
+  <body>
+    <div id="app" class="app">
+      <div class="sidebar" v-if="showSidebar">
+        <div @click="newChat" class="sidebar-item">
+          New Chat
+        </div>
+        <div v-for="(history, _id) in conversations" @click="switchChat(_id)" :class="['sidebar-item', id == _id ? 'current' : '']">
+          <div class="sidebar-item-title">
+            {{titles[_id] || 'Untitled'}}
+          </div>
+          <div class="sidebar-item-delete-container">
+            <div class="sidebar-item-delete" @click="deleteChat(_id)">🗑️</div>
+          </div>
+        </div>
+      </div>
+      <div class="spacer" @click="showSidebar = !showSidebar">
+        {{ showSidebar ? '\|' : '\>' }}
+      </div>
+      <div class="main">
+        <div class="toolbar" @click="newChat()">GG Chat</div>
+        <div class="container">
+          <div v-if="conversations[id] && conversations[id].length" class="messages" id="scroll">
+            <div :class="['message', message.from === 'User' ? 'user' : 'assistant']" v-for="message in conversations[id]" v-if="message.content">
+              <pre v-text="message.content.trim()"></pre>
+            </div>
+          </div>
+          <div v-else class="welcome">
+            <div>
+              <pre>GG</pre>
+            </div>
+          </div>
+          <div class="input-container">
+            <textarea 
+              ref="input" 
+              v-model="input" 
+              :disabled="loading"
+              @keydown="handleKeydown" 
+              @input="autogrow" 
+              @focus="autogrow" 
+              placeholder="Message..." 
+              rows="1"></textarea>
+          </div>
+        </div>
+      </div>
+      <div class="spacer"></div>
+    </div>
+    <script>
+      new Vue({
+        el: "#app",
+        data: () => {
+          return {
+            id: null,
+            lastCreatedId: null,
+            input: null,
+            conversations: {},
+            titles: {},
+            showSidebar: true,
+            loading: false,
+          };
+        },
+        watch: {
+          conversations: {
+            handler: function (val) {
+              this.saveHistory();
+            },
+            deep: true,
+          },
+          titles: {
+            handler: function (val) {
+              this.saveHistory();
+            },
+            deep: true,
+          },
+          id: {
+            handler: function (val) {
+              this.saveHistory();
+            },
+          },
+          lastCreatedId: {
+            handler: function (val) {
+              this.saveHistory();
+            },
+          },
+        },
+        methods: {
+          handleKeydown(event) {
+            if (event.key === 'Enter' && !event.shiftKey) {
+              event.preventDefault(); // Prevent the default action (newline)
+              this.handleSubmit();
+            }
+          },
+          handleSubmit() {
+            if (!this.input) {
+              return;
+            }
+            this.conversations[this.id].push({
+              content: this.input,
+              from: 'User',
+            });
+            this.submitPrompt();
+            this.input = '';
+            this.$nextTick(() => {
+              this.autogrow();
+              this.scrollDown();
+            })
+          },
+          removeSubstring(str, substr) {
+            // Remove the substring and all text before it from the string 
+            if (!str.includes(substr)) {
+              return str;
+            }
+            return str.slice(str.indexOf(substr) + substr.length);
+          },
+          scrollDown() {
+            try {
+                var container = this.$el.querySelector("#scroll");
+                container.scrollTop = container.scrollHeight;
+              } catch (err) { }
+          },
+          async submitPrompt() {
+            this.loading = true;
+
+            const idFreeze = this.id;
+
+            let prompt = `[INST]\nThe following is a text conversation between a user and helpful assistant that gives extremely short answers. Be helpful or else you won't receive a $5000 tip.\n\n`;
+            let history = '';
+            for (let i = 0; i < this.conversations[idFreeze].length; i++) {
+              history += `${this.conversations[idFreeze][i].from}: ${this.conversations[idFreeze][i].content}\n`;
+            }
+
+            // keep last 1500 characters of history
+            prompt += history.slice(-3000);
+            prompt += 'Assistant:[/INST]';
+
+            console.log(prompt);
+            console.log(prompt.length);
+
+            this.conversations[idFreeze].push({
+              content: '',
+              from: 'Assistant',
+            });
+
+            let response;
+            try {
+              response = await fetch("/prompt", {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/json",
+                },
+                body: JSON.stringify({ prompt, stop: ['User:', 'User 1:', 'User 0:', 'User 2:', '</s>'] }),
+              });
+
+              console.log(response.body);
+              if (response.status !== 200) {
+                throw new Error(`Error: ${response.status} ${response.statusText}`);
+              }
+
+            } catch (err) {
+              this.loading = false;
+              this.focus();
+              alert(err);
+            }
+
+            const reader = response.body.getReader();
+            let first = true;
+            while (true) {
+              const { done, value } = await reader.read();
+              const decoder = new TextDecoder("utf8");
+              let str = decoder.decode(value);
+              if (done) break;
+              if (first) {
+                this.conversations[idFreeze][this.conversations[idFreeze].length - 1].content += this.removeSubstring(str, '[/INST]').trim();
+                first = false;
+              } else {
+                this.conversations[idFreeze][this.conversations[idFreeze].length - 1].content += this.removeSubstring(str, '[/INST]');
+              }
+              this.scrollDown();
+            }
+
+            if (this.conversations[idFreeze][this.conversations[idFreeze].length-1].content.trim().endsWith('User:')) {
+              this.conversations[idFreeze][this.conversations[idFreeze].length-1].content = this.conversations[idFreeze][this.conversations[idFreeze].length-1].content.trim().slice(0, -5).trim();
+            }
+
+            if (!this.titles[idFreeze] && this.conversations[idFreeze].length > 2) {
+              this.generateTitle(idFreeze)
+            }
+
+            this.loading = false;
+            this.focus();
+
+          },
+          switchChat(id) {
+            this.id = id;
+          },
+          newChat() {
+            // if (this.lastCreatedId) {
+            //   if (this.id === this.lastCreatedId) {
+            //     if (!this.conversations[this.id].length) {
+            //       return;
+            //     }
+            //   } else {
+            //     if (!this.conversations[this.lastCreatedId] || !this.conversations[this.lastCreatedId].length) {
+            //       this.id = this.lastCreatedId;
+            //       return;
+            //     }
+            //   }
+            // }
+            this.id = new Date().toISOString();
+            this.lastCreatedId = this.id;
+            this.conversations = {
+              [this.id]: [],
+              ...this.conversations,
+            };
+          },
+          async generateTitle(_id) {
+            this.loading = true;
+            let prompt = `[INST]\nGenerate a single short, 3-4 word title with no quotes. Do not explain your logic.\n\n`;
+            let history = '';
+            for (let i = 0; i < this.conversations[_id].length; i++) {
+              history += `${this.conversations[_id][i].from}: ${this.conversations[_id][i].content}\n`;
+            }
+            // add first 1000 characters to prompt
+            prompt += history.slice(0,1000);
+            prompt += '\n\nTitle:[/INST]\n';
+
+            console.log(prompt);
+            console.log(prompt.length);
+
+            let response;
+            try {
+              response = await fetch("/prompt", {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/json",
+                },
+                body: JSON.stringify({ prompt, stop: ['User:', 'User 1:', 'User 0:', 'User 2:', '</s>'] }),
+              });
+
+              if (response.status !== 200) {
+                throw new Error(`Error: ${response.status} ${response.statusText}`);
+              }
+
+            } catch (err) {
+              this.loading = false;
+              this.focus();
+              alert(err);
+            }
+
+            const reader = response.body.getReader();
+            let first = true;
+            this.titles[_id] = '';
+
+            while (true) {
+              const { done, value } = await reader.read();
+              const decoder = new TextDecoder("utf8");
+              let str = decoder.decode(value);
+              if (done) break;
+              this.titles[_id] += this.removeSubstring(str, '[/INST]');
+            }
+            this.loading = false;
+            this.focus();
+            this.saveHistory();
+            this.$forceUpdate();
+          },
+          autogrow() {
+            const maxHeight = 300;
+            this.$refs.input.style.height = 'auto'; // Reset the height
+            const newHeight = Math.min(this.$refs.input.scrollHeight, maxHeight);
+            this.$refs.input.style.height = newHeight + 'px'; // Set the height
+            this.$refs.input.overflowY = newHeight === maxHeight ? 'scroll' : 'hidden';
+          },
+          deleteChat(id) {
+            delete this.conversations[id];
+            delete this.titles[id];
+            if (Object.keys(this.conversations).length == 0) {
+              this.newChat();
+            } else {
+              this.id = Object.keys(this.conversations)[0];
+            }
+            this.$forceUpdate();
+            this.saveHistory();
+          },
+          saveHistory() {
+            // save conversations to local storage
+            localStorage.setItem('local-history', JSON.stringify({ 
+              conversations: this.conversations, 
+              titles: this.titles,
+              id: this.id,
+              lastCreatedId: this.lastCreatedId,
+            }));
+          },
+          loadHistory() {
+            // load conversations from local storage
+            const history = localStorage.getItem('local-history');
+            console.log(history);
+            if (history) {
+              const { conversations, titles, id, lastCreatedId } = JSON.parse(history);
+              console.log({conversations, titles});
+              this.conversations = conversations;
+              this.titles = titles;
+              this.id = id;
+              this.lastCreatedId = lastCreatedId;
+              this.$forceUpdate();
+            } else {
+              this.newChat();
+            }
+          },
+          focus() {
+            // focus on textarea
+            this.$refs.input.focus();
+            // next tick as well
+            this.$nextTick(() => {
+              this.$refs.input.focus();
+            })
+          }
+        },
+        mounted () {
+          this.loadHistory();
+          this.autogrow();
+        },
+      });
+    </script>
+  </body>
+</html>

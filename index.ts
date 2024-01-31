@@ -27,7 +27,6 @@ export default class Together {
   }
 
   async stream(request: CompletionRequest): Promise<EventEmitter> {
-    console.log()
     const stream = await streamCompletion(request, this.apiKey);
     return stream;
   }
