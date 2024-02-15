@@ -7,6 +7,8 @@
       placeholder="System prompt..."
       v-model="system"
     ></textarea>
+    <label for="temperature">Temperature</label
+    ><input id="temperature" type="number" />
     <br />
     <button @click="save">Save</button>
     <button @click="reset">Reset</button>
@@ -49,6 +51,7 @@ export default {
 <style scoped>
 h1 {
   margin-bottom: 30px;
+  font-weight: 300;
 }
 .settings-textarea {
   width: 100%;
@@ -79,6 +82,7 @@ button {
   padding: 10px 20px 10px 20px;
   margin-top: 10px;
   cursor: pointer;
+  font-family: "Roboto Mono", monospace;
 }
 
 button:hover {

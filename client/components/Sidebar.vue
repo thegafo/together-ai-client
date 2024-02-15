@@ -60,6 +60,7 @@ export default {
 .sidebar {
   height: 100%;
   width: 260px;
+  min-width: 260px;
   background: var(--sidebar-color);
   border-right: 1px solid rgba(255, 255, 255, 0.2);
   font-size: 12px;
@@ -87,18 +88,25 @@ export default {
   justify-content: space-between;
   align-items: center;
   box-sizing: border-box;
+  font-size: 11px;
 }
 
 .sidebar-item:hover {
   background-color: var(--highlight-color);
 }
 
+.sidebar-item-title {
+  flex-grow: 1;
+}
+
 .sidebar-item-delete-container {
-  display: flex;
+  width: 30px;
 }
 
 .sidebar-item-delete {
   display: none;
+  float: right;
+  font-size: 8px;
 }
 
 .sidebar-item:hover > .sidebar-item-delete-container > .sidebar-item-delete {
@@ -109,7 +117,7 @@ export default {
   background-color: var(--highlight-color);
 }
 
-@media only screen and (max-width: 899px) {
+@media only screen and (max-width: 1000px) {
   .sidebar {
     display: none;
   }

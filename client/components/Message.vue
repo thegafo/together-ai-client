@@ -1,8 +1,8 @@
 <template>
   <div :class="['message', from === 'User' ? 'user' : 'assistant']">
-    <pre>{{ content.trim() }}</pre>
+    <!--pre>{{ content.trim() }}</pre-->
     <!-- TODO -->
-    <!--div v-html="formattedContent"></div-->
+    <div v-html="formattedContent"></div>
   </div>
 </template>
 
@@ -42,6 +42,8 @@ export default {
   width: calc(100% - 40px);
   background: var(--highlight-color);
   padding: 10px;
+  padding-top: 25px;
+  padding-bottom: 25px;
   margin: 10px;
   border-radius: 10px;
   color: white;
@@ -59,14 +61,15 @@ pre {
   white-space: pre-wrap;
   word-wrap: break-word;
   overflow-x: auto;
-  font-family: "Roboto Mono", monospace;
+  margin-top: -5px;
+  margin-bottom: -15px;
 }
 
-pre code {
-  font-family: "Roboto Mono", monospace; /* Monospaced font */
-  background-color: black; /* Light grey background */
-  padding: 10px; /* Padding around text */
+code {
+  background-color: rgba(0, 0, 0, 0.1); /* Light grey background */
   display: block; /* Block display */
   overflow-x: auto; /* Horizontal scrolling for long lines */
+  padding: 15px;
+  border-radius: 5px;
 }
 </style>

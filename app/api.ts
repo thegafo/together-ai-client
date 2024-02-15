@@ -106,6 +106,7 @@ export const getCompletion = ({
         }
       });
     } catch (err) {
+      console.log(err);
       reject(`Error: ${err}`)
     }
   });

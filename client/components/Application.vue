@@ -119,11 +119,14 @@ export default {
   --assistant-color: rgba(8, 82, 86, 0.3);
 }
 
+* {
+  font-family: "Roboto Mono", monospace;
+}
+
 html,
 body {
   background: var(--background-color);
   color: var(--text-color);
-  font-family: "Roboto Mono", monospace;
   height: 100%;
   width: 100%;
   display: flex;
